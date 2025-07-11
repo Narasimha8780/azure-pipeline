@@ -18,7 +18,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                $url = "https://your-download-link.com/your-app.zip"
+                $url = "https://ue5filestorage.blob.core.windows.net/damac-utopia/Damac_Utopia_revised.zip?sp=r&st=2025-07-11T07:10:30Z&se=2025-08-01T15:10:30Z&spr=https&sv=2024-11-04&sr=b&sig=3wpnswblN71CqZzbQ0%2F0UWhPin2RTx8AXF7W9df0tsM%3D"
                 $outputPath = "C:\Temp\app.zip"
                 Invoke-WebRequest -Uri $url -OutFile $outputPath
 
@@ -55,7 +55,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                $batPath = "C:\App\WindowsNoEditor\Damac_Hills_PS\Samples\PixelStreaming\WebServers\StartWebServers.bat"
+                $batPath = "C:\App\WindowsNoEditor\Damac_Hills_PS\Samples\PixelStreaming\WebServers\get_ps_servers.bat"
                 Start-Process -FilePath $batPath -Wait
 
           - task: PowerShell@2
