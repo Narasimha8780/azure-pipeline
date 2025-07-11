@@ -4,7 +4,7 @@ trigger:
       - main
 
 pool:
-  name: windows-gpu
+  vmImage: 'windows-latest'
 stages:
   - stage: DeployApp
     displayName: 'Deploy and Launch Pixel Streaming App'
