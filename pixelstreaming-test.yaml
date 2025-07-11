@@ -4,7 +4,7 @@ trigger:
       - main
 
 pool:
-  name: Default  # Must be a self-hosted Windows VM with GPU
+  name: Default  
 
 stages:
   - stage: SetupApp
