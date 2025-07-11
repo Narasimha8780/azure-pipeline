@@ -4,8 +4,7 @@ trigger:
       - main
 
 pool:
-  name: Default  # Replace with your self-hosted GPU agent pool name
-
+  name: windows-gpu
 stages:
   - stage: DeployApp
     displayName: 'Deploy and Launch Pixel Streaming App'
