@@ -4,14 +4,47 @@ trigger:
       - main
 
 pool:
-  vmImage: 'windows-latest'
+  name: Default  # Must be a self-hosted Windows VM with GPU
+
 stages:
-  - stage: DeployApp
-    displayName: 'Deploy and Launch Pixel Streaming App'
+  - stage: SetupApp
+    displayName: 'Install NVIDIA GPU Driver and Launch Unreal Pixel Streaming App'
     jobs:
-      - job: DeployJob
-        displayName: 'Install, Configure, and Run App'
+      - job: Deploy
+        displayName: 'Install Driver, Configure Display, and Launch App'
         steps:
+
+          # 1. Install NVIDIA Driver
+          - task: PowerShell@2
+            displayName: 'Download NVIDIA Driver'
+            inputs:
+              targetType: 'inline'
+              script: |
+                $url = "https://download.microsoft.com/download/1/1/d/11dd7071-c632-4a83-b950-d5eb3fdcf587/553.62_grid_win10_win11_server2019_server2022_dch_64bit_international_azure_swl.exe"
+                $outPath = "C:\Temp\nvidia_driver.exe"
+                Invoke-WebRequest -Uri $url -OutFile $outPath
+
+          - task: PowerShell@2
+            displayName: 'Install NVIDIA Driver Silently'
+            inputs:
+              targetType: 'inline'
+              script: |
+                Start-Process -FilePath "C:\Temp\nvidia_driver.exe" -ArgumentList "/s /noreboot" -Wait -NoNewWindow
+
+          # 2. Set display resolution to 1920x1080 and only use 2 displays
+          - task: PowerShell@2
+            displayName: 'Set Display Resolution to 1920x1080 (Limit to 2 displays)'
+            inputs:
+              targetType: 'inline'
+              script: |
+                Add-Type -AssemblyName System.Windows.Forms
+                $screens = [System.Windows.Forms.Screen]::AllScreens
+                Write-Host "Found $($screens.Count) display(s)"
+
+                if ($screens.Count -gt 2) {
+                  Write-Host "Please manually disable extra monitors beyond 2."
+                }
+
           - task: PowerShell@2
             displayName: 'Download ZIP Package'
             inputs:
