@@ -1,0 +1,83 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  name: Default  # Replace with your self-hosted GPU agent pool name
+
+stages:
+  - stage: DeployApp
+    displayName: 'Deploy and Launch Pixel Streaming App'
+    jobs:
+      - job: DeployJob
+        displayName: 'Install, Configure, and Run App'
+        steps:
+          - task: PowerShell@2
+            displayName: 'Download ZIP Package'
+            inputs:
+              targetType: 'inline'
+              script: |
+                $url = "https://your-download-link.com/your-app.zip"
+                $outputPath = "C:\Temp\app.zip"
+                Invoke-WebRequest -Uri $url -OutFile $outputPath
+
+          - task: PowerShell@2
+            displayName: 'Extract ZIP Package'
+            inputs:
+              targetType: 'inline'
+              script: |
+                Expand-Archive -Path "C:\Temp\app.zip" -DestinationPath "C:\App" -Force
+
+          - task: PowerShell@2
+            displayName: 'Delete ZIP File'
+            inputs:
+              targetType: 'inline'
+              script: |
+                Remove-Item -Path "C:\Temp\app.zip" -Force
+
+          - task: PowerShell@2
+            displayName: 'Create Shortcut with Streaming Args'
+            inputs:
+              targetType: 'inline'
+              script: |
+                $exePath = Get-ChildItem -Path "C:\App\WindowsNoEditor" -Filter "*.exe" -Recurse | Select-Object -First 1
+                $shortcutPath = "$env:USERPROFILE\Desktop\PixelStreaming.lnk"
+                $WScriptShell = New-Object -ComObject WScript.Shell
+                $shortcut = $WScriptShell.CreateShortcut($shortcutPath)
+                $shortcut.TargetPath = $exePath.FullName
+                $shortcut.Arguments = "-PixelStreamingIP=localhost -PixelStreamingPort=8888 -RenderOffscreen"
+                $shortcut.WorkingDirectory = Split-Path $exePath.FullName
+                $shortcut.Save()
+
+          - task: PowerShell@2
+            displayName: 'Run Web Server BAT File'
+            inputs:
+              targetType: 'inline'
+              script: |
+                $batPath = "C:\App\WindowsNoEditor\Damac_Hills_PS\Samples\PixelStreaming\WebServers\StartWebServers.bat"
+                Start-Process -FilePath $batPath -Wait
+
+          - task: PowerShell@2
+            displayName: 'Run setup.bat'
+            inputs:
+              targetType: 'inline'
+              script: |
+                $setupBat = "C:\App\WindowsNoEditor\Damac_Hills_PS\Samples\PixelStreaming\WebServers\SignallingWebServer\platform_scripts\cmd\setup.bat"
+                Start-Process -FilePath $setupBat -Wait
+
+          - task: PowerShell@2
+            displayName: 'Run Start_With*.ps1'
+            inputs:
+              targetType: 'inline'
+              script: |
+                $ps1 = Get-ChildItem -Path "C:\App\WindowsNoEditor\Damac_Hills_PS\Samples\PixelStreaming\WebServers\SignallingWebServer\platform_scripts\cmd" -Filter "Start_With*.ps1" | Select-Object -First 1
+                Start-Process -FilePath "powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -File `"$($ps1.FullName)`"" -NoNewWindow
+
+          - task: PowerShell@2
+            displayName: 'Launch App via Shortcut'
+            inputs:
+              targetType: 'inline'
+              script: |
+                $shortcut = "$env:USERPROFILE\Desktop\PixelStreaming.lnk"
+                Start-Process -FilePath $shortcut
